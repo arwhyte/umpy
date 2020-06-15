@@ -8,27 +8,24 @@ import yaml
 
 
 DESCRIPTION = """
-    This script retrieves a single volume of Sanborn Fire Insurance map images from the Library
-    of Congress for a given municipality and year. The script requires that two command line
-    arguments be provided:
+    This script retrieves a single volume of map images from the Library of Congress. The script
+    requires that two command line arguments be provided:
 
-    1. a < key > string value that matches a municipality key in the companion
-        < loc_sanborn_params.yml > file
+    1. a < key > string value that matches a map key in the companion < loc_maps_config.yml > file.
     2. an < output > filepath string value for local storage of the retrieved images.
 
-    The 'key' arg is used to filter on relevant municipality data contained in the loaded YAML file.
+    The 'key' arg is used to filter on the relevant map data contained in the loaded YAML file.
 
     Once configured, the script retrieves the target images, renames the downloaded files,
-    stores them locally in the < output > location, logs the process both the the screen and
+    stores them locally in the < output > location, and logs the process both the the screen and
     a log file.
 
     The LOC also makes available large JPEG 2000 and TIFF images.
     """
 
-# TODO - use yaml service_path value
 
-
-def configure_logger(municipality, start_date_time, output_path):
+def configure_logger(map, start_date_time, output_path):
+    """TODO"""
 
     # Set logging format and default level
     logging.basicConfig(
@@ -40,10 +37,10 @@ def configure_logger(municipality, start_date_time, output_path):
     # logger.setLevel(logging.DEBUG)
 
     # Log file
-    filepath = f"{output_path}/Sanborn-LOC"
-    filepath += f"-{municipality['name']}-{municipality['state']}-{municipality['year']}"
-    if municipality['vol']:
-        filepath += f"-vol_{municipality['vol']}"
+    filepath = f"{output_path}/"
+    filepath += '-'.join(map['filename_segments']['name'])
+    if map['filename_segments']['vol']:
+        filepath += f"-vol_{map['filename_segments']['vol']}"
     filepath += '.log'
 
     # Add file and stream handlers
@@ -53,26 +50,25 @@ def configure_logger(municipality, start_date_time, output_path):
     return logger
 
 
-def create_filename(municipality, image_id, part=None):
+def create_filename(map, image_id, part=None):
     """Return local image filename.
 
     Parameters:
-        municipality (dict): contains name, state, year, and file extension.
+        map (dict): contains name, state, year, vol, and file extension.
         image_num (str): map image identifier
 
     Returns:
         str: formatted filename
     """
 
-    filename = 'Sanborn-LOC'
-    filename += f"-{municipality['name']}-{municipality['state']}-{municipality['year']}"
-    if municipality['vol']:
-        filename += f"-vol_{municipality['vol']}"
+    filename = '-'.join(map['filename_segments']['name'])
+    if map['filename_segments']['vol']:
+        filename += f"-vol_{map['filename_segments']['vol']}"
     if part:
         filename += f"-{part}"
-    if len(image_id) < 4:
+    if len(image_id) < 4: # pad
         image_id = image_id.zfill(4)
-    filename += f"-{image_id}.{municipality['extension']}"
+    filename += f"-{image_id}.{map['filename_segments']['extension']}"
 
     return filename
 
@@ -94,7 +90,7 @@ def create_parser(description):
         '--key',
         type=str,
         required=True,
-        help="Required YAML municipality key"
+        help="Required YAML map key"
         )
 
     parser.add_argument(
@@ -155,44 +151,46 @@ def main(args):
     # Parse CLI args
     cli_args = create_parser(DESCRIPTION).parse_args(args)
 
-    municipality_key = cli_args.key
+    map_key = cli_args.key
     output_path = cli_args.out
 
     # load YAML config
-    filepath = 'loc_sanborn_params.yml'
+    filepath = 'loc_maps_config.yml'
     config = read_yaml_file(filepath)
 
     # YAML config values
     host = config['host']
-    municipality = config['municipalities'][municipality_key] # filter on CLI arg
+    map = config['maps'][map_key] # filter on CLI arg
 
     # Start time
     start_date_time = dt.datetime.now()
 
     # Configure logger
-    logger = configure_logger(municipality, start_date_time, output_path)
+    logger = configure_logger(map, start_date_time, output_path)
 
     # Start run
     logger.info(f"Start run: {start_date_time.isoformat()}")
     # logger.info(f"Start run: {now.strftime('%Y-%m-%d-%H:%M:%S')}") # alternative
 
     # Retrieve files
-    for path in municipality['paths']:
+    for path in map['paths']:
 
         prefix = path['prefix']
         part = path['part'] # part of work (e.g., index)
-        pad = path['pad_num']
         default_path = path['default_path']
 
         # Compile regex (used in inner loop)
         regex = re.compile(path['regex']) # assigned as a raw string (e.g., r"_1925-[0-9]*")
 
-        for i in range(path['index_start'], path['index_stop'], 1):
+        # Pad image number
+        zfill_width = path['index']['zfill_width']
+
+        for i in range(path['index']['start'], path['index']['stop'], 1):
 
             # Add zfill if required
             num = str(i)
-            if pad:
-                num = num.zfill(4)
+            if zfill_width > 0:
+                num = num.zfill(zfill_width)
 
             # LOC resource URL (regex replacement)
             repl = f"{prefix}{num}" # repl = replace
@@ -202,7 +200,7 @@ def main(args):
             response = requests.get(resource_url)
 
             # Write binary content (mode=wb)
-            new_filename = create_filename(municipality, num, part)
+            new_filename = create_filename(map, num, part)
 
             write_file(f"{output_path}/{new_filename}", response.content, 'wb')
 
