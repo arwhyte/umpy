@@ -1,0 +1,86 @@
+---
+host: https://tile.loc.gov
+maps:
+  ann_arbor_mi_1925:
+    filename_segments:
+      name:
+        - Sanborn
+        - LOC
+        - Ann_Arbor
+        - MI
+      year: 1925
+      vol: null
+      extension: jpg
+    paths:
+      - prefix: 03909_1925-
+        regex: 03909_1925-[0-9]*
+        part: null
+        default_path: /image-services/iiif/service:gmd:gmd411m:g4114m:g4114am:g039091925:03909_1925-0000/full/pct:25/0/default.jpg
+        index:
+          start: 0
+          stop: 41
+          zfill_width: 4
+  chelsea_mi_1918:
+    filename_segments:
+      name:
+        - Sanborn
+        - LOC
+        - Chelsea
+        - MI
+      year: 1918
+      vol: null
+      extension: jpg
+    paths:
+      - prefix: 03961_1918-
+        regex: 03961_1918-[0-9]*
+        part: null
+        default_path: /image-services/iiif/service:gmd:gmd411m:g4114m:g4114cm:g039611918:03961_1918-0001/full/pct:25/0/default.jpg
+        index:
+          start: 1
+          stop: 6
+          zfill_width: 4
+  jackson_mi_1907:
+    filename_segments:
+      name:
+        - Sanborn
+        - LOC
+        - Jackson
+        - MI
+      year: 1907
+      vol: null
+      extension: jpg
+    paths:
+      - prefix: 04057_1907-
+        regex: 04057_1907-[0-9]*
+        part: null
+        default_path: /image-services/iiif/service:gmd:gmd411m:g4114m:g4114jm:g040571907:04057_1907-0000/full/pct:25/0/default.jpg
+        index:
+          start: 0
+          stop: 93
+          zfill_width: 4
+      - prefix: 04057_1907-Ind
+        regex: 04057_1907-Ind[0-9]*
+        part: index
+        default_path: /image-services/iiif/service:gmd:gmd411m:g4114m:g4114jm:g040571907:04057_1907-Ind1/full/pct:25/0/default.jpg
+        index:
+          start: 1
+          stop: 2
+          zfill_width: 0
+  xinjiang_quan_tui_1759:
+    filename_segments:
+      name:
+        - LOC
+        - China
+        - Xinjiang_quan_tu
+      year: 1759
+      vol: null
+      extension: jpg
+    paths:
+      - prefix: ca
+        regex: ca[0-9]*
+        part: null
+        default_path: /image-services/iiif/service:gmd:gmd7m:g7823m:g7823xm:gct00164:ca000001/full/pct:25/0/default.jpg
+        index:
+          start: 1
+          stop: 23
+          zfill_width: 6
