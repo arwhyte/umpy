@@ -4,8 +4,9 @@ maps:
   ann_arbor_mi_1925:
     filename_segments:
       name:
-        - Sanborn
+        - Map
         - LOC
+        - Sanborn
         - Ann_Arbor
         - MI
       year: 1925
@@ -23,8 +24,9 @@ maps:
   chelsea_mi_1918:
     filename_segments:
       name:
-        - Sanborn
+        - Map
         - LOC
+        - Sanborn
         - Chelsea
         - MI
       year: 1918
@@ -42,8 +44,9 @@ maps:
   jackson_mi_1907:
     filename_segments:
       name:
-        - Sanborn
+        - Map
         - LOC
+        - Sanborn
         - Jackson
         - MI
       year: 1907
@@ -69,6 +72,7 @@ maps:
   xinjiang_quan_tui_1759:
     filename_segments:
       name:
+        - Map
         - LOC
         - China
         - Xinjiang_quan_tu
