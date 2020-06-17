@@ -5,6 +5,7 @@ import re
 import requests
 import sys
 import yaml
+from pathlib import Path
 
 
 DESCRIPTION = """
@@ -24,8 +25,17 @@ DESCRIPTION = """
     """
 
 
-def configure_logger(map, start_date_time, output_path):
-    """TODO"""
+def configure_logger(output_path, filename_segments, start_date_time):
+    """Returns a logger object with stream and file handlers.
+
+    Parameters:
+        output_path (str): relative directory path were file is to be located
+        filename_segments (list): filename segments
+        start_date_time (datetime): start datetime.
+
+    Returns:
+        Path: path object (absolute path)
+    """
 
     # Set logging format and default level
     logging.basicConfig(
@@ -36,12 +46,9 @@ def configure_logger(map, start_date_time, output_path):
     logger = logging.getLogger()
     # logger.setLevel(logging.DEBUG)
 
-    # Log file
-    filepath = f"{output_path}/"
-    filepath += '-'.join(map['filename_segments']['name'])
-    if map['filename_segments']['vol']:
-        filepath += f"-vol_{map['filename_segments']['vol']}"
-    filepath += '.log'
+    # Create filename and path
+    filename = create_filename(filename_segments, extension='.log')
+    filepath = create_filepath(output_path, filename)
 
     # Add file and stream handlers
     logger.addHandler(logging.FileHandler(filepath))
@@ -50,27 +57,56 @@ def configure_logger(map, start_date_time, output_path):
     return logger
 
 
-def create_filename(map, image_id, part=None):
-    """Return local image filename.
+def create_filename(name_segments, part=None, num=None, extension='.jpg'):
+    """Returns a Path object comprising a filename built up from a list
+    of name segments.
 
     Parameters:
-        map (dict): contains name, state, year, vol, and file extension.
-        image_num (str): map image identifier
+        name_segments (list): file name segments
+        part (str): optional LOC image designator (e.g., index)
+        num (str): image number (typically zfilled)
+        extension (str): file extension; defaults to .jpg
 
     Returns:
-        str: formatted filename
+        Path: path object
     """
 
-    filename = '-'.join(map['filename_segments']['name'])
-    if map['filename_segments']['vol']:
-        filename += f"-vol_{map['filename_segments']['vol']}"
-    if part:
-        filename += f"-{part}"
-    if len(image_id) < 4: # pad
-        image_id = image_id.zfill(4)
-    filename += f"-{image_id}.{map['filename_segments']['extension']}"
+    segments = name_segments['name'].copy() # shallow copy
 
-    return filename
+    # Add additional segments
+    if name_segments['year']:
+        segments.append(str(name_segments['year']))
+    if name_segments['vol']:
+       segments.append(f"vol_{name_segments['vol']}")
+
+    if extension == '.log':
+        return Path('-'.join(segments)).with_suffix(extension)
+
+    # Continue adding segments for non-log files
+    if name_segments['vol']:
+        segments.append(f"vol_{name_segments['vol']}")
+    if part:
+        segments.append(part)
+    if num:
+        if len(num) < 4: # pad
+            num = num.zfill(4)
+        segments.append(num)
+
+    return Path('-'.join(segments)).with_suffix(extension)
+
+
+def create_filepath(output_path, filename):
+    """Return local filepath for image and log files.
+
+    Parameters:
+        output_path (str): relative directory path were file is to be located
+        filename (str): name of file including extension
+
+    Returns:
+        Path: path object (absolute path)
+    """
+
+    return Path(Path.cwd(), output_path, filename)
 
 
 def create_parser(description):
@@ -160,20 +196,17 @@ def main(args):
 
     # YAML config values
     host = config['host']
-    map = config['maps'][map_key] # filter on CLI arg
+    map_config = config['maps'][map_key] # filter on CLI arg
+    filename_segments = map_config['filename_segments']
 
-    # Start time
+    # Configure and start logger
     start_date_time = dt.datetime.now()
-
-    # Configure logger
-    logger = configure_logger(map, start_date_time, output_path)
-
-    # Start run
+    logger = configure_logger(output_path, filename_segments, start_date_time)
     logger.info(f"Start run: {start_date_time.isoformat()}")
     # logger.info(f"Start run: {now.strftime('%Y-%m-%d-%H:%M:%S')}") # alternative
 
     # Retrieve files
-    for path in map['paths']:
+    for path in map_config['paths']:
 
         prefix = path['prefix']
         part = path['part'] # part of work (e.g., index)
@@ -196,16 +229,19 @@ def main(args):
             repl = f"{prefix}{num}" # repl = replace
             resource_url = f"{host}{regex.sub(repl, default_path)}"
 
-            # Retrieve binary content (images are small in size so no need to stream in chunks)
+            # Retrieve binary content
+            # Images are small in size so no need to stream in chunks
             response = requests.get(resource_url)
 
-            # Write binary content (mode=wb)
-            new_filename = create_filename(map, num, part)
+            # Create filename and path
+            filename = create_filename(filename_segments, part, num)
+            filepath = create_filepath(output_path, filename)
 
-            write_file(f"{output_path}/{new_filename}", response.content, 'wb')
+            # Write binary content (mode=wb)
+            write_file(filepath, response.content, 'wb')
 
             # Log new file name
-            logger.info(f"Renamed file to {new_filename}")
+            logger.info(f"Renamed file to {filepath.name}")
 
 
     # End run
