@@ -10,7 +10,7 @@ maps:
         - MI
       year: 1925
       vol: null
-      extension: jpg
+      extension: .jpg
     paths:
       - prefix: 03909_1925-
         regex: 03909_1925-[0-9]*
@@ -29,7 +29,7 @@ maps:
         - MI
       year: 1918
       vol: null
-      extension: jpg
+      extension: .jpg
     paths:
       - prefix: 03961_1918-
         regex: 03961_1918-[0-9]*
@@ -48,7 +48,7 @@ maps:
         - MI
       year: 1907
       vol: null
-      extension: jpg
+      extension: .jpg
     paths:
       - prefix: 04057_1907-
         regex: 04057_1907-[0-9]*
@@ -74,7 +74,7 @@ maps:
         - Xinjiang_quan_tu
       year: 1759
       vol: null
-      extension: jpg
+      extension: .jpg
     paths:
       - prefix: ca
         regex: ca[0-9]*
